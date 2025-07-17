@@ -12,21 +12,33 @@ export class Track {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ length: 255 })
-  track_url: string;
-
   @Column({ length: 255, nullable: true })
   img_url: string;
 
-  @Column({ length: 50 })
+  @Column({ length: 255 })
+  track_url: string;
+
+  @Column({ length: 100, nullable: true })
   category: string;
 
-  @ManyToOne(() => User, user => user.id)
-  user: User;
+  @Column({ type: 'int', default: 0 })
+  count_play: number;
 
-  @CreateDateColumn()
+  @Column({ type: 'int', default: 0 })
+  count_like: number;
+
+  @ManyToOne(() => User, user => user.id)
+  uploader: User;
+
+  @Column({ default: false })
+  is_deleted: boolean;
+
+  @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updated_at: Date;
+
+  @Column({ type: 'datetime', nullable: true })
+  deleted_at: Date;
 } 

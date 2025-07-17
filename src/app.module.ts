@@ -4,11 +4,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 import { TracksModule } from './tracks/tracks.module';
 import { PlaylistsModule } from './playlists/playlists.module';
 import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
 import { FilesModule } from './files/files.module';
+// import { MailModule } from './mail/mail.module';
+import { HealthModule } from './health/health.module';
+import { ShutdownService } from './databases/shutdown.service';
 
 @Module({
   imports: [
@@ -28,13 +32,16 @@ import { FilesModule } from './files/files.module';
       }),
     }),
     UsersModule,
+    AuthModule,
     TracksModule,
     PlaylistsModule,
     CommentsModule,
     LikesModule,
     FilesModule,
+    // MailModule, // Tạm thời tắt chức năng mail
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ShutdownService],
 })
 export class AppModule {}
