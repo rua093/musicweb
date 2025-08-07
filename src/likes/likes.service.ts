@@ -18,35 +18,45 @@ export class LikesService {
     const track = await this.tracksRepo.findOne({ where: { id: dto.track } });
     if (!track) throw new NotFoundException('Track not found');
 
-    // Check if user already liked/disliked this track
+    // Check if user already liked this track
     const existingLike = await this.likesRepo.findOne({
       where: { user: { id: userId }, track: { id: dto.track } },
     });
 
-    let delta = dto.quantity;
-    if (existingLike) {
-      // Nếu user đổi từ like sang dislike hoặc ngược lại
-      delta = dto.quantity - existingLike.quantity;
-      existingLike.quantity = dto.quantity;
-      await this.likesRepo.save(existingLike);
-    } else {
-      // Create new like
-      const like = this.likesRepo.create({
-        quantity: dto.quantity,
-        user: { id: userId },
-        track: { id: dto.track },
-      });
-      await this.likesRepo.save(like);
+    if (dto.quantity === 1) {
+      // Like action
+      if (!existingLike) {
+        // Tạo record like mới
+        const like = this.likesRepo.create({
+          user: { id: userId },
+          track: { id: dto.track },
+        });
+        await this.likesRepo.save(like);
+        
+        // Tăng count_like
+        track.count_like = (track.count_like || 0) + 1;
+        await this.tracksRepo.save(track);
+      }
+    } else if (dto.quantity === -1) {
+      // Unlike action
+      if (existingLike) {
+        // Xóa record like
+        await this.likesRepo.remove(existingLike);
+        
+        // Giảm count_like
+        track.count_like = Math.max(0, (track.count_like || 0) - 1);
+        await this.tracksRepo.save(track);
+      }
     }
-    // Cập nhật count_like cho track
-    track.count_like = Math.max(0, (track.count_like || 0) + delta);
-    await this.tracksRepo.save(track);
+    
     return true;
   }
 
   async findByUser(userId: number, current = 1, pageSize = 10) {
     const [items, total] = await this.likesRepo.findAndCount({
-      where: { user: { id: userId } },
+      where: { 
+        user: { id: userId }
+      },
       skip: (current - 1) * pageSize,
       take: pageSize,
       relations: ['track', 'user'],

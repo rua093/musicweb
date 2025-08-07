@@ -30,6 +30,9 @@ async function bootstrap() {
 
   // Static files
   app.useStaticAssets(join(__dirname, '..', 'public'));
+  app.useStaticAssets(join(__dirname, '..', 'public'), {
+    prefix: '/public/',
+  });
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('ejs');
 
@@ -39,10 +42,17 @@ async function bootstrap() {
   // Middleware
   app.use(cookieParser());
   app.enableCors({
-    origin: true,
+    origin: [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173'
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'target_type'],
+    exposedHeaders: ['target_type'],
   });
 
   // Global prefix

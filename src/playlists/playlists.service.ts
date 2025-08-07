@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Playlist } from './schemas/playlist.entity';
 import { PlaylistTrack } from './schemas/playlist-track.entity';
 import { CreatePlaylistDto, CreateEmptyPlaylistDto } from './dto/create-playlist.dto';
@@ -98,7 +98,41 @@ export class PlaylistsService {
       relations: ['user'],
       order: { created_at: 'DESC' },
     });
-    return { items, total, current, pageSize };
+
+    // Lấy thông tin tracks cho mỗi playlist
+    const playlistsWithTracks = await Promise.all(
+      items.map(async (playlist) => {
+        const playlistTracks = await this.playlistTracksRepo.find({
+          where: { playlist_id: playlist.id },
+        });
+        
+        const trackIds = playlistTracks.map((pt) => pt.track_id);
+        let tracks: Track[] = [];
+        
+        if (trackIds.length > 0) {
+          tracks = await this.tracksRepo.find({
+            where: { id: In(trackIds) },
+            select: ['id', 'title', 'description', 'category', 'img_url', 'track_url', 'count_like', 'count_play']
+          });
+        }
+
+        return {
+          ...playlist,
+          tracks: tracks.map(track => ({
+            _id: track.id,
+            title: track.title,
+            description: track.description,
+            category: track.category,
+            imgUrl: track.img_url,
+            trackUrl: track.track_url,
+            countLike: track.count_like,
+            countPlay: track.count_play
+          }))
+        };
+      })
+    );
+
+    return { items: playlistsWithTracks, total, current, pageSize };
   }
 
   async findAll(current = 1, pageSize = 10) {

@@ -143,7 +143,7 @@ export class PlaylistsController {
       title: playlist.title,
       isPublic: playlist.is_public,
       user: playlist.user?.id ?? userId,
-      tracks: [],
+      tracks: playlist.tracks || [],
       isDeleted: playlist.is_deleted ?? false,
       createdAt: playlist.created_at,
       updatedAt: playlist.updated_at,

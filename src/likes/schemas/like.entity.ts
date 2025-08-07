@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm';
+import { Entity, ManyToOne, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { User } from '../../users/schemas/user.entity';
 import { Track } from '../../tracks/schemas/track.entity';
 
@@ -6,9 +6,6 @@ import { Track } from '../../tracks/schemas/track.entity';
 export class Like {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column({ type: 'int', default: 1 })
-  quantity: number;
 
   @ManyToOne(() => User, (user) => user.id)
   user: User;
