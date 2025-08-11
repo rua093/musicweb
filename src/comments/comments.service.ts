@@ -38,7 +38,7 @@ export class CommentsService {
     return { items, total, current, pageSize };
   }
 
-  async remove(id: number, userId: number) {
+  async remove(id: number, userId: number, userRole?: string) {
     const comment = await this.commentsRepo.findOne({
       where: { id, is_deleted: false },
       relations: ['user'],
@@ -49,7 +49,12 @@ export class CommentsService {
         deletedCount: 0,
       };
     }
-    if (comment.user.id !== userId) throw new ForbiddenException('No permission');
+    
+    // Allow ADMIN to delete any comment, regular users can only delete their own
+    if (userRole !== 'ADMIN' && comment.user.id !== userId) {
+      throw new ForbiddenException('No permission');
+    }
+    
     comment.is_deleted = true;
     comment.deleted_at = new Date();
     await this.commentsRepo.save(comment);

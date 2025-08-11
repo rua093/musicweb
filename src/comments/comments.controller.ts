@@ -101,7 +101,8 @@ export class CommentsController {
   @Delete(':id')
   async remove(@Param('id') id: string, @Request() req) {
     const userId = this.validateUserId(req);
-    const result = await this.commentsService.remove(Number(id), userId);
+    const userRole = req.user?.role; // Get user role from JWT token
+    const result = await this.commentsService.remove(Number(id), userId, userRole);
     return {
       statusCode: 200,
       message: '',

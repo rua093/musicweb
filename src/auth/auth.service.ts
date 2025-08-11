@@ -73,6 +73,21 @@ export class AuthService {
     return this.login(user);
   }
 
+  async updateUserToAdmin(email: string): Promise<User> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Update user to ADMIN role
+    const updatedUser = await this.usersService.update(user.id.toString(), { 
+      role: 'ADMIN',
+      is_verify: true 
+    });
+
+    return updatedUser;
+  }
+
   async getAccount(user: any) {
     const userData = await this.usersService.findById(Number(user.userId));
     if (!userData) {
@@ -137,15 +152,6 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-  }
-
-  async logout(user: any) {
-    // In a real application, you might want to blacklist the token
-    // For now, we'll just return a success message
-    return {
-      message: 'Logout successful',
-      success: true,
-    };
   }
 
   async socialMedia(type: string, username: string) {

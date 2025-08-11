@@ -28,10 +28,21 @@ async function bootstrap() {
   app.useGlobalGuards(new JwtAuthGuard(reflector));
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Static files
-  app.useStaticAssets(join(__dirname, '..', 'public'));
+  // Static files with CORS headers
+  app.useStaticAssets(join(__dirname, '..', 'public'), {
+    setHeaders: (res, path) => {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
+  });
   app.useStaticAssets(join(__dirname, '..', 'public'), {
     prefix: '/public/',
+    setHeaders: (res, path) => {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
   });
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('ejs');

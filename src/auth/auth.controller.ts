@@ -7,6 +7,7 @@ import { Public } from '../decorator/customize';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { SocialMediaDto } from './dto/social-media.dto';
 import { Response } from 'express';
+import { User } from '../users/schemas/user.entity';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -55,16 +56,73 @@ export class AuthController {
   @Public()
   @ApiOperation({ summary: 'User registration' })
   @ApiResponse({ status: 201, description: 'Registration successful' })
-  async register(@Body() createUserDto: CreateUserDto) {
-    const user = await this.authService.register(createUserDto, true) as import('../users/schemas/user.entity').User;
-    return {
-      statusCode: 201,
-      message: 'Register a new user',
-      data: {
-        _id: user.id?.toString() ?? '',
-        createdAt: user.created_at?.toISOString() ?? '',
-      },
+  async register(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
+    const result = await this.authService.register(createUserDto) as any;
+    const user = result.user;
+    const mappedUser = {
+      _id: user.id?.toString() ?? '',
+      username: user.username ?? '',
+      email: user.email,
+      address: user.address ?? '',
+      isVerify: user.is_verify ?? false,
+      type: user.type ?? 'SYSTEM',
+      name: user.name ?? '',
+      role: user.role ?? '',
+      gender: user.gender ?? '',
+      age: user.age ?? null,
     };
+    // Set refresh token in cookie
+    res.cookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    return res.status(201).json({
+      statusCode: 201,
+      message: 'User Registration',
+      data: {
+        access_token: result.access_token,
+        refresh_token: result.refresh_token,
+        user: mappedUser,
+      },
+    });
+  }
+
+  @Post('create-admin')
+  @Public()
+  @ApiOperation({ summary: 'Create admin user for testing' })
+  @ApiResponse({ status: 201, description: 'Admin user created successfully' })
+  async createAdmin(@Res() res: Response) {
+    try {
+      // Try to update existing user to ADMIN role
+      const updatedUser = await this.authService.updateUserToAdmin('test1@gmail.com');
+      const mappedUser = {
+        _id: updatedUser.id?.toString() ?? '',
+        username: updatedUser.username ?? '',
+        email: updatedUser.email,
+        address: updatedUser.address ?? '',
+        isVerify: updatedUser.is_verify ?? false,
+        type: updatedUser.type ?? 'SYSTEM',
+        name: updatedUser.name ?? '',
+        role: updatedUser.role ?? '',
+        gender: updatedUser.gender ?? '',
+        age: updatedUser.age ?? null,
+      };
+      
+      return res.status(200).json({
+        statusCode: 200,
+        message: 'User updated to ADMIN role successfully',
+        data: {
+          user: mappedUser,
+        },
+      });
+    } catch (error) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: error.message,
+      });
+    }
   }
 
   @Get('account')
@@ -139,13 +197,11 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'User logout' })
   @ApiResponse({ status: 200, description: 'Logout successful' })
-  async logout(@Request() req, @Res() res: Response) {
-    // Xoá cookie refresh_token
+  async logout(@Res() res: Response) {
     res.clearCookie('refresh_token');
-    return res.status(201).json({
-      statusCode: 201,
-      message: 'Logout User',
-      data: 'ok',
+    return res.status(200).json({
+      statusCode: 200,
+      message: 'Logout successful',
     });
   }
 
